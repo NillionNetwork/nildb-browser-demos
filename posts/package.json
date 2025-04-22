@@ -1,0 +1,24 @@
+{
+  "name": "nildb-browser-demos/posts",
+  "version": "0.1.0",
+  "description": "Small browser-based bulletin board that leverages public-key cryptography (for encryption and signing) and nilDB (for storage and communication).",
+  "license": "MIT",
+  "homepage": "https://github.com/nillionnetwork/nildb-browser-demos",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nillionnetwork/nildb-browser-demos"
+  },
+  "bugs": "https://github.com/NillionNetwork/nildb-browser-demos/issues",
+  "engines": {
+    "node": ">= 14.0.0",
+    "npm": ">= 6.0.0"
+  },
+  "dependencies": {
+    "buffer": "^6.0.3",
+    "eciesjs": "^0.4.14",
+    "@noble/hashes": "^1.7.2",
+    "@noble/secp256k1": "^2.2.3",
+    "secretvaults": "^0.0.0-alpha.1",
+    "esbuild": "^0.25.2"
+  }
+}
