@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>nildb-browser-demos/ships</title>
+    <script>
+      var favIcon = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAGFBMVEUAAABHcEwAAAAAAAAAAAAAAAAAAAAAAACpMnD0AAAAB3RSTlNjAL+fpPk8rO4B2AAAADNJREFUGJVjYEQDDIxsLMxwwMIGFGBgRwIMOAVYgQBZgAlkHNMgEwB6joUB7E8WiOfQAADiPANLertncwAAAABJRU5ErkJggg==";
+      var docHead = document.getElementsByTagName('head')[0];
+      var newLink = document.createElement('link');
+      newLink.rel = 'shortcut icon';
+      newLink.type = 'image/x-icon';
+      newLink.href = 'data:image/png;base64,'+favIcon;
+      docHead.appendChild(newLink);
+    </script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cabin:wght@300;400;500;700" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.5.1/css/all.css" />
+    <style>
+      html, body { height:100%; width:100%; margin:0; }
+      body {
+        height:100%; width:100%;
+        display:flex;
+        justify-content:center;
+        background-color:#00002F;
+        font-family:'Cabin',sans-serif;
+        color:#FFFFFF;
+      }
+      #container { width:100%; margin:20px; padding:10px; }
+      #controls {
+        padding-bottom:25px;
+        margin-bottom:30px;
+        border-bottom:1px solid white;
+      }
+      h1 { margin:10px 10px 10px 10px; }
+      p { margin:10px 10px 50px 10px; }
+      #messages {
+        margin:4px;
+        padding:4px;
+        border:0px #000000 solid;
+        font-family:Monospace;
+        font-size:24px;
+        color:#FFFFFF;
+      }
+      #messages > div {
+        margin:10px;
+      }
+      table { border-spacing:0px; border-collapse:separate; }
+      tr { height:36px; }
+      td { padding:4px; }
+      td .pk { font-size:8px; line-height:6px; }
+      td .msg { font-size:22px; overflow-wrap: break-word; word-break: break-word; }
+      #content { height:46px; width:100%; }
+      .noselect {
+        -webkit-touch-callout:none; /* iOS Safari */
+          -webkit-user-select:none; /* Safari */
+           -khtml-user-select:none; /* Konqueror HTML */
+             -moz-user-select:none; /* Old versions of Firefox */
+              -ms-user-select:none; /* Internet Explorer/Edge */
+                   user-select:none; /* Non-prefixed version, currently
+                                        supported by Chrome, Edge, Opera and Firefox */
+      }
+      .board {
+        margin:0px 40px 40px 40px;
+      }
+      .clickable {
+        cursor:pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <div id="controls">
+        <h1><span style="color:#777777;">nildb-browser-demos /</span> ships</h1>
+        <p>
+          Play a miniature naval battle game against a nilDB cluster! Choose five positions for your own ships and then take turns choosing locations to attack.
+        </p>
+        <script src="./bundle.js"></script>
+        <table style="  margin-left: auto; margin-right: auto;">
+          <tr>
+            <td>
+              <div id="player" class="board" style="font-size:60px;"></div>
+            </td>
+            <td>
+              <div id="opponent" class="board" style="font-size:60px;"></div>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div id="messages">
+      </div>
+    </div>
+  </body>
+  <script>
+    function message(text) {
+      document.getElementById("messages").innerHTML = (
+        "<div>" + text + "</div>" + document.getElementById("messages").innerHTML
+      );
+    }
+  
+    async function attackByPlayer(element) {
+      if (playing && !pause && playerAttempts < 25) {
+        playerAttempts++;
+
+        await document.putRandom(Math.random());
+        const rnd = await document.getRandom();
+
+        if (Math.random() > (15 / 25)) {
+          element.innerHTML = '<i style="color:orange;" class="fa-solid fa-explosion"></i>';
+          message("You hit a target!");
+          playerHits++;
+        } else {
+          element.innerHTML = '<i style="color:lightblue;" class="fa-solid fa-water"></i>';
+          message("You missed!");
+        }
+
+        if (playerHits == 5) {
+          playing = false;
+          finished = true;
+          message("You win!");
+          document.getElementById("opponent").style.opacity = 1;
+          document.getElementById("player").style.opacity = 1;
+          return;
+        }
+
+        pause = true;
+        setTimeout(async function () {
+          document.getElementById("player").style.opacity = 1;
+          document.getElementById("opponent").style.opacity = 0.5;
+          await attackByComputer();
+        }, 300);
+      }
+    }
+
+    async function attackByComputer() {
+      if (playerTargets.length === 0) {
+        playing = false;
+        finished = true;
+      }
+    
+      let index = Math.floor(Math.random() * Math.pow(2, 32)) % playerTargets.length;
+      let id = "player" + playerTargets[index];
+      if (playerTargets[index] in shipsPlayer) {
+        document.getElementById(id).innerHTML = '<i style="color:orange;" class="fa-solid fa-explosion"></i>';
+        message("Cluster hits a target!");
+        clusterHits++;
+      } else {
+        document.getElementById(id).innerHTML = '<i style="color:lightblue;" class="fa-solid fa-explosion"></i>';
+        message("Cluster missed!");
+      }
+      playerTargets.splice(index, 1);
+      
+      if (clusterHits == 5) {
+        playing = false;
+        finished = true;
+        message("Cluster wins!");
+        document.getElementById("opponent").style.opacity = 1;
+        document.getElementById("player").style.opacity = 1;
+      }
+      
+      pause = false;
+      document.getElementById("opponent").style.opacity = 1;
+      setTimeout(async function () {
+        document.getElementById("player").style.opacity = 0.5;
+      }, 1000);
+    }
+
+    function deployByPlayer(element, position) {
+      if (!playing && Object.keys(shipsPlayer).length < 5) {
+        shipsPlayer[position] = true;
+        element.innerHTML = '<i style="color:#AAAAAA;" class="fa-solid fa-ship"></i>';
+      } 
+
+      if (!playing && Object.keys(shipsPlayer).length == 5) {
+        for (let row = 0; row < 5; row++) {
+          for (let col = 0; col < 5; col++) {
+            document.getElementById("player" + row + "" + col).classList.remove("clickable");
+          }
+        }
+        playing = true;
+        message("The cluster has placed its ships! Click on a location on the right-hand board to attack it!");
+        document.getElementById("opponent").style.opacity = 1;
+        document.getElementById("player").style.opacity = 0.5;
+          for (let row = 0; row < 5; row++) {
+            for (let col = 0; col < 5; col++) {
+              document.getElementById("computer" + row + "" + col).classList.add("clickable");
+            }
+          }
+        }
+    }
+
+    let shipsPlayer = {};
+    let pause = false;
+    let playing = false;
+    let playerTargets = [];
+    let clusterHits = 0;
+    let playerHits = 0;
+    let playerAttempts = 0;
+    let finished = false;
+
+    window.onload = function () {
+
+      // Create player board.
+      let html = "";
+      for (let row = 0; row < 5; row++) {
+        html += "<tr>";
+        for (let col = 0; col < 5; col++) {
+          const coordinates = row + "" + col;
+          playerTargets.push(coordinates);
+          html += (
+            '<td ' +
+              'id="player' + row + '' + col + '" ' +
+              'class="clickable" ' +
+              'onclick="deployByPlayer(this, \'' + row + '' + col + '\');"' +
+            '>' +
+              '<i style="color:lightblue;" class="fa-solid fa-water"></i>' +
+            '</td>'
+          );
+        }
+        html += "</tr>";
+      }
+      document.getElementById("player").innerHTML = "<table>" + html + "</table>";
+
+      // Create cluster board.
+      html = "";
+      for (let row = 0; row < 5; row++) {
+        html += "<tr>";
+        for (let col = 0; col < 5; col++) {
+          html += (
+            '<td id="computer' + row + '' + col + '" onclick="attackByPlayer(this);">' +
+              '<i class="fa-solid fa-smog"></i>' +
+            '</td>'
+          );
+        }
+        html += "</tr>";
+      }
+      document.getElementById("opponent").innerHTML = "<table>" + html + "</table>";
+
+      message("Click on five of the locations on the left-hand board to place your ships!");
+      document.getElementById("opponent").style.opacity = 0.5;
+    }
+  </script>
+</html>
